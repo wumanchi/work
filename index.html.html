@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>環球塗料 - 萬用稀釋劑智能計算機</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --primary-hover: #004085;
+            --bg-color: #f4f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #ced4da;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: var(--card-bg);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 86, 179, 0.08);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f0f4f8;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            display: none;
+        }
+        .result-title {
+            font-weight: bold;
+            color: #343a40;
+            margin-bottom: 12px;
+            font-size: 16px;
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 6px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+            align-items: center;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+        .result-value {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 20px;
+        }
+        .system-tip {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>萬用塗料稀釋計算機</h2>
+    
+    <div class="form-group">
+        <label for="paintWeight">原本塗料重量 (公斤/kg)</label>
+        <input type="number" id="paintWeight" value="180" placeholder="例如: 180" step="any">
+    </div>
+    
+    <div class="form-group">
+        <label for="v0">供應商原始黏度 (填數字)</label>
+        <input type="number" id="v0" placeholder=" " step="any">
+        <div class="system-tip">此數值將作為流體動態斜率的特徵基準。</div>
+    </div>
+    
+    <div class="form-group">
+        <label for="vt">現場目標黏度 (填數字)</label>
+        <input type="number" id="vt" placeholder="必須小於原始黏度" step="any">
+    </div>
+    
+    <button onclick="calculateThinnerWeight()">一鍵計算添加量</button>
+    
+    <div class="result-box" id="resultBox">
+        <div class="result-title">📊 計算結果</div>
+        <div class="result-item">
+            <span>預估稀釋劑比例：</span>
+            <span class="result-value" id="resPercent">0.00 %</span>
+        </div>
+        <div class="result-item">
+            <span>👉 應加入稀釋劑重量：</span>
+            <span class="result-value" id="resWeight">0.000 kg</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateThinnerWeight() {
+        const w = parseFloat(document.getElementById('paintWeight').value);
+        const v0 = parseFloat(document.getElementById('v0').value);
+        const vt = parseFloat(document.getElementById('vt').value);
+        
+        if (isNaN(w) || w <= 0) {
+            alert('請輸入正確的塗料重量！');
+            return;
+        }
+        if (isNaN(v0) || v0 <= 0) {
+            alert('請輸入正確的原始黏度！');
+            return;
+        }
+        if (isNaN(vt) || vt <= 0) {
+            alert('請輸入正確的目標黏度！');
+            return;
+        }
+        if (vt >= v0) {
+            alert(`目標黏度 (${vt}) 必須小於原始黏度 (${v0})，否則不需要加入稀釋劑！`);
+            return;
+        }
+
+        const a = 0.008 * v0 - 0.336;
+        const b = 0.14 * v0 - 5.44;
+        const c = Math.pow(b, 2) - (4 * (0.004 * v0 - 0.168) * (v0 - vt));
+
+        if (c < 0) {
+            alert('輸入的黏度落差超出模型擬合範圍，請重新確認數字。');
+            return;
+        }
+
+        let x = (b - Math.sqrt(c)) / a;
+
+        if (x < 0) x = 0;
+        if (x > 50) {
+            alert('計算出的稀釋劑比例過高(>50%)，製程可能不安全，請重新確認黏度。');
+            return;
+        }
+
+        const thinnerKg = w * (x / (100 - x));
+
+        document.getElementById('resPercent').innerText = x.toFixed(2) + ' %';
+        document.getElementById('resWeight').innerText = thinnerKg.toFixed(3) + ' kg';
+        
+        document.getElementById('resultBox').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
