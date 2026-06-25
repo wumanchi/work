@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>稀釋劑計算機</title>
+    <title>環球塗料 - 精準分段稀釋劑計算機</title>
     <style>
         :root {
             --primary-color: #0056b3;
@@ -108,7 +108,7 @@
         .result-value {
             font-weight: bold;
             color: var(--primary-color);
-            font-size: 20px;
+            font-size: 24px;
         }
         .system-tip {
             font-size: 12px;
@@ -121,7 +121,7 @@
 <body>
 
 <div class="container">
-    <h2>稀釋劑計算機</h2>
+    <h2>萬用塗料稀釋計算機</h2>
     
     <div class="form-group">
         <label for="paintWeight">原本塗料重量 (公斤/kg)</label>
@@ -129,13 +129,12 @@
     </div>
     
     <div class="form-group">
-        <label for="v0">供應商原始黏度 (填數字)</label>
-        <input type="number" id="v0" placeholder=" " step="any">
-        <div class="system-tip">此數值將作為流體動態斜率的特徵基準。</div>
+        <label for="v0">供應商原始黏度 (秒)</label>
+        <input type="number" id="v0" placeholder="請輸入測量出的原始黏度" step="any">
     </div>
     
     <div class="form-group">
-        <label for="vt">現場目標黏度 (填數字)</label>
+        <label for="vt">現場目標黏度 (秒)</label>
         <input type="number" id="vt" placeholder="必須小於原始黏度" step="any">
     </div>
     
@@ -143,10 +142,6 @@
     
     <div class="result-box" id="resultBox">
         <div class="result-title">📊 計算結果</div>
-        <div class="result-item">
-            <span>預估稀釋劑比例：</span>
-            <span class="result-value" id="resPercent">0.00 %</span>
-        </div>
         <div class="result-item">
             <span>👉 應加入稀釋劑重量：</span>
             <span class="result-value" id="resWeight">0.000 kg</span>
@@ -156,10 +151,12 @@
 
 <script>
     function calculateThinnerWeight() {
+        // 1. 讀取輸入數值
         const w = parseFloat(document.getElementById('paintWeight').value);
         const v0 = parseFloat(document.getElementById('v0').value);
         const vt = parseFloat(document.getElementById('vt').value);
         
+        // 2. 輸入防錯驗證
         if (isNaN(w) || w <= 0) {
             alert('請輸入正確的塗料重量！');
             return;
@@ -173,32 +170,40 @@
             return;
         }
         if (vt >= v0) {
-            alert(`目標黏度 (${vt}) 必須小於原始黏度 (${v0})，否則不需要加入稀釋劑！`);
+            alert(`目標黏度 (${vt}秒) 必須小於原始黏度 (${v0}秒)，否則不需要加入稀釋劑！`);
             return;
         }
 
-        const a = 0.008 * v0 - 0.336;
-        const b = 0.14 * v0 - 5.44;
-        const c = Math.pow(b, 2) - (4 * (0.004 * v0 - 0.168) * (v0 - vt));
+        // 3. 核心分段線性衰減計算法 (以180kg為基準計算所需稀釋劑總和)
+        let baseThinner = 0;
+        let currentV = v0;
 
-        if (c < 0) {
-            alert('輸入的黏度落差超出模型擬合範圍，請重新確認數字。');
-            return;
+        // 第一階段：計算 50 秒以上的降黏貢獻 (每5秒需1kg -> 也就是降1秒需 0.2kg)
+        if (currentV > 50) {
+            let targetInStage = Math.max(vt, 50);
+            baseThinner += (currentV - targetInStage) / 5;
+            currentV = targetInStage;
         }
 
-        let x = (b - Math.sqrt(c)) / a;
-
-        if (x < 0) x = 0;
-        if (x > 50) {
-            alert('計算出的稀釋劑比例過高(>50%)，製程可能不安全，請重新確認黏度。');
-            return;
+        // 第二階段：計算 40 到 50 秒之間的降黏貢獻 (每2秒需1kg -> 也就是降1秒需 0.5kg)
+        if (currentV > 40 && currentV <= 50) {
+            let targetInStage = Math.max(vt, 40);
+            baseThinner += (currentV - targetInStage) / 2;
+            currentV = targetInStage;
         }
 
-        const thinnerKg = w * (x / (100 - x));
+        // 第三階段：計算 25 到 40 秒之間的降黏貢獻 (每1秒需1kg -> 也就是降1秒需 1.0kg)
+        if (currentV > vt) {
+            baseThinner += (currentV - vt) / 1;
+        }
 
-        document.getElementById('resPercent').innerText = x.toFixed(2) + ' %';
-        document.getElementById('resWeight').innerText = thinnerKg.toFixed(3) + ' kg';
+        // 4. 根據實際重量進行等比例縮放： 實際稀釋劑 = 基準稀釋劑 * (實際重量 / 180)
+        const finalThinnerKg = baseThinner * (w / 180);
+
+        // 5. 將結果渲染至網頁畫面
+        document.getElementById('resWeight').innerText = finalThinnerKg.toFixed(2) + ' kg';
         
+        // 顯示結果區塊
         document.getElementById('resultBox').style.display = 'block';
     }
 </script>
