@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>環球塗料 - 精準分段稀釋劑計算機</title>
+    <title>塗料稀釋劑計算機</title>
     <style>
         :root {
             --primary-color: #0056b3;
@@ -99,7 +99,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
-            font-size: 16px;
+            font-size: 24px;
             align-items: center;
         }
         .result-item:last-child {
@@ -108,7 +108,7 @@
         .result-value {
             font-weight: bold;
             color: var(--primary-color);
-            font-size: 24px;
+            font-size: 36px;
         }
         .system-tip {
             font-size: 12px;
@@ -121,29 +121,28 @@
 <body>
 
 <div class="container">
-    <h2>萬用塗料稀釋計算機</h2>
+    <h2>塗料稀釋劑計算機</h2>
     
     <div class="form-group">
-        <label for="paintWeight">原本塗料重量 (公斤/kg)</label>
+        <label for="paintWeight">油漆重量(公斤)</label>
         <input type="number" id="paintWeight" value="180" placeholder="例如: 180" step="any">
     </div>
     
     <div class="form-group">
-        <label for="v0">供應商原始黏度 (秒)</label>
-        <input type="number" id="v0" placeholder="請輸入測量出的原始黏度" step="any">
+        <label for="v0">原始黏度(秒)</label>
+        <input type="number" id="v0" placeholder="請輸入原始黏度" step="any">
     </div>
     
     <div class="form-group">
-        <label for="vt">現場目標黏度 (秒)</label>
+        <label for="vt">目標黏度(秒)</label>
         <input type="number" id="vt" placeholder="必須小於原始黏度" step="any">
     </div>
     
-    <button onclick="calculateThinnerWeight()">一鍵計算添加量</button>
+    <button onclick="calculateThinnerWeight()">計算</button>
     
     <div class="result-box" id="resultBox">
-        <div class="result-title">📊 計算結果</div>
         <div class="result-item">
-            <span>👉 應加入稀釋劑重量：</span>
+            <span>應添加稀釋劑重量：</span>
             <span class="result-value" id="resWeight">0.000 kg</span>
         </div>
     </div>
@@ -158,19 +157,19 @@
         
         // 2. 輸入防錯驗證
         if (isNaN(w) || w <= 0) {
-            alert('請輸入正確的塗料重量！');
+            alert('請輸入正確的塗料重量');
             return;
         }
         if (isNaN(v0) || v0 <= 0) {
-            alert('請輸入正確的原始黏度！');
+            alert('請輸入正確的原始黏度');
             return;
         }
         if (isNaN(vt) || vt <= 0) {
-            alert('請輸入正確的目標黏度！');
+            alert('請輸入正確的目標黏度');
             return;
         }
         if (vt >= v0) {
-            alert(`目標黏度 (${vt}秒) 必須小於原始黏度 (${v0}秒)，否則不需要加入稀釋劑！`);
+            alert(`目標黏度 (${vt}秒) 必須小於原始黏度 (${v0}秒)，否則不需要加入稀釋劑。`);
             return;
         }
 
